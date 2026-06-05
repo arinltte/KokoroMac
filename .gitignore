@@ -1,0 +1,82 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# macOS
+# ─────────────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Xcode
+# ─────────────────────────────────────────────────────────────────────────────
+# User-specific settings (window layouts, personal breakpoints, local schemes)
+xcuserdata/
+*.xcuserstate
+
+# Workspace and Project user data
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Build artifacts and Derived Data
+DerivedData/
+build/
+Build/
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive
+*.xcresult
+
+# Misc Xcode files (Legacy & Edge cases)
+*.xccheckout
+*.moved-aside
+*.xcscmblueprint
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcplugindata
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Swift Package Manager
+# ─────────────────────────────────────────────────────────────────────────────
+.build/
+.swiftpm/
+Packages/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Secrets / Private Files
+# ─────────────────────────────────────────────────────────────────────────────
+private/
+.env
+.env.*
+*.p12
+*.p8
+*.cer
+*.mobileprovision
+*.provisionprofile
+ExportOptions.plist
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Public Folder / Assets
+# ─────────────────────────────────────────────────────────────────────────────
+public/KokoroMac.mp4
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Editors & Temporary
+# ─────────────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.log
+tmp/
+temp/
+*~
+*.swp
+*.swo
+*.orig
+*.rej
