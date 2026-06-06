@@ -107,6 +107,6 @@ Contributions are welcome. Whether it's a bug report, a feature suggestion, a do
 
 The KokoroMac application source code is licensed under the [MIT License](./LICENSE).
 
-This application is a graphical wrapper for the incredible [Kokoro TTS](https://github.com/hexgrad/kokoro) model and library, created by `@hexgrad and contributors. The Kokoro model weights, Python library, and underlying audio data are licensed under the **Apache License 2.0**. 
+This application is a graphical wrapper for the incredible [Kokoro TTS](https://github.com/hexgrad/kokoro) model and library, created by `@hexgrad` and contributors. The Kokoro model weights, Python library, and underlying audio data are licensed under the **Apache License 2.0**. 
 
 We deeply appreciate the open-source AI community for making local inference possible.
