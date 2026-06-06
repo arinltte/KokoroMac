@@ -2,7 +2,7 @@
   <img src="public/KokoroMaclogo.jpg" alt="KokoroMac Logo" width="64" />
   <br />
   <h1 align="center">KokoroMac</h1>
-  <p align="center">Local, Open-Weight Text-to-Speech Studio for Mac.</p>
+  <p align="center">Offline Voice Studio for Your Mac.</p>
   <p align="center">
     <a href="https://github.com/arinltte/KokoroMac/releases/latest"><img src="https://img.shields.io/github/v/release/arinltte/KokoroMac?style=flat-square&color=blue" alt="Latest Release" /></a>
     <a href="https://github.com/arinltte/KokoroMac/blob/main/LICENSE"><img src="https://img.shields.io/github/license/arinltte/KokoroMac?style=flat-square&color=green" alt="License" /></a>
