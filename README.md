@@ -43,6 +43,15 @@ KokoroMac is designed to be self-sufficient and will automatically install Pytho
 
 - **macOS 14.0 (Sonoma)** or later.
 - **Apple Silicon** (M1/M2/M3/M4) Mac.
+
+| Text Length | RAM Usage | Generation Time |
+|-------------|-----------|-----------------|
+| 100 words   | ~2.9 GB   | 8 seconds       |
+| 300 words   | ~3.7 GB   | 11 seconds      |
+| 600 words   | ~4.6 GB   | 20 seconds      |
+
+> **Note:** Results may vary depending on your machine, system configuration, available memory, and background processes. These tests were performed on a **MacBook Pro M4 with 16 GB RAM**.
+  
 - **[Homebrew](https://brew.sh/)**: The app uses Homebrew to install Python 3.11 and `espeak-ng`. *(If missing, the setup wizard will provide the exact terminal command to install it).*
 - **Internet Connection**: Only required during the very first launch to download dependencies and model weights.
 
