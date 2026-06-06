@@ -23,6 +23,9 @@
 
 Powered by the state-of-the-art, open-weight 82M parameter Kokoro model, KokoroMac requires no internet connection, no API keys, and no data leaves your machine after the initial setup. Just type, generate, and export.
 
+
+<video src="https://github.com/user-attachments/assets/2ba3066d-8e2c-446e-a311-2d930795878f" controls width="800"></video>
+
 ## ✨ Top Features
 
 - 🚀 **100% Offline & Private**: Runs entirely on-device. Your text and generated audio never leave your Mac.
