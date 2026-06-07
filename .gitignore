@@ -13,8 +13,8 @@ Icon?
 # ─────────────────────────────────────────────────────────────────────────────
 # Xcode
 # ─────────────────────────────────────────────────────────────────────────────
-# User-specific settings (window layouts, personal breakpoints, local schemes)
-xcuserdata/
+# Xcode user-specific settings
+**/xcuserdata/
 *.xcuserstate
 
 # Workspace and Project user data
@@ -64,7 +64,7 @@ ExportOptions.plist
 # ─────────────────────────────────────────────────────────────────────────────
 # Public Folder / Assets
 # ─────────────────────────────────────────────────────────────────────────────
-public/KokoroMac.mp4
+public/KokoroMacvideo.mp4
 
 
 # ─────────────────────────────────────────────────────────────────────────────
