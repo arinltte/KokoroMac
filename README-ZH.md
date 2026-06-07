@@ -95,6 +95,6 @@ rm -rf ~/.KokoroMac
 KokoroMac 应用程序源代码基于 [MIT 许可证](./LICENSE) 授权。
 
 *   **核心 TTS 引擎：** 本应用是令人惊叹的 [Kokoro TTS](https://github.com/hexgrad/kokoro) 模型和库的图形化封装，由 `@hexgrad` 及贡献者创建。Kokoro 模型权重、Python 库及底层音频数据基于 Apache License 2.0 授权。
-*   **音频拼接与停顿管线：** v0.4.0 中集成的数学级停顿计时、音频裁剪和后端拼接的架构方法，深受 [remsky/Kokoro-FastAPI](https://github.com/remsky/Kokoro-FastAPI) 中记录的社区方案启发。
+*   **音频拼接与停顿管线：** v0.4.0 中集成的数学级停顿计时、音频裁剪和后端拼接的架构方法，深受 [nazdridoy/kokoro-tts](https://github.com/nazdridoy/kokoro-tts) 中记录的社区方案启发。
 
 我们深深感谢开源 AI 社区让本地推理成为可能。
