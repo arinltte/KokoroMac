@@ -8,6 +8,9 @@ class AppSettings: ObservableObject {
     // UI Event Bus for cursor-aware text insertion
     let insertDirective = PassthroughSubject<String, Never>()
     
+    // TTS-ready text with <PAUSE:X> markers built from the AttributedString
+    @Published var ttsReadyText: String = ""
+    
     // Call this to trigger temp file cleanup
     func cleanupTempFiles() {
         let tempDir = FileManager.default.homeDirectoryForCurrentUser

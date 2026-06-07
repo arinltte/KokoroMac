@@ -4,20 +4,19 @@ struct MainView: View {
     @EnvironmentObject var ttsManager: TTSManager
     @EnvironmentObject var appSettings: AppSettings
     
-    // Long default text showcasing Pauses and Phoneme Overrides
     @State private var textInput: String = """
-    Welcome to KokoroMac, your local, open-weight text-to-speech studio. \u{FFFC}
-    
-    Kokoro is an efficient AI model with 82 million parameters. It delivers quality comparable to larger models while being significantly faster. Because it runs entirely on your Apple Silicon Mac, you never worry about internet connectivity or data privacy. Your words stay on your machine. \u{FFFC}
-    
-    Let's explore how to direct your speech generation. First, control the pacing. By inserting a pause block, you give the listener a moment to absorb the information. \u{FFFC} This is perfect for audiobooks or presentations.
-    
-    Second, override pronunciation using the Phoneme Override tool. For example, force the exact pronunciation using the International Phonetic Alphabet like this: [Kokoro](/kˈOkəɹO/). The word is Japanese, translating to "heart" or "spirit". \u{FFFC}
-    
-    Adjust the speech speed using the slider on the right. A speed of 1.0 is natural, 0.8 is great for technical docs, and 1.2 is perfect for skimming. \u{FFFC}
-    
-    Start typing or paste your favorite articles. The voice is yours.
-    """
+        Welcome to KokoroMac, your local, open-weight text-to-speech studio. \u{FFFC}
+        
+        Kokoro is an efficient AI model with 82 million parameters. It delivers quality comparable to larger models while being significantly faster. Because it runs entirely on your Apple Silicon Mac, you never worry about internet connectivity or data privacy. Your words stay on your machine. \u{FFFC}
+        
+        Let's explore how to direct your speech generation. First, control the pacing. By inserting a pause block, you give the listener a moment to absorb the information. \u{FFFC} This is perfect for audiobooks or presentations.
+        
+        Second, override pronunciation using the Phoneme Override tool. For example, force the exact pronunciation using the International Phonetic Alphabet like this: [Kokoro](/kˈOkəɹO/). The word is Japanese, translating to "heart" or "spirit". \u{FFFC}
+        
+        Adjust the speech speed using the slider on the right. A speed of 1.0 is natural, 0.8 is great for technical docs, and 1.2 is perfect for skimming. \u{FFFC}
+        
+        Start typing or paste your favorite articles. The voice is yours.
+        """
     
     @State private var selectedVoice: Voice = VoiceLibrary.availableVoices[0]
     @State private var speechSpeed: Double = 1.0
@@ -28,37 +27,34 @@ struct MainView: View {
     
     var body: some View {
         ZStack {
-            AmbientThemeBackground(theme: appSettings.appTheme).ignoresSafeArea()
+            AmbientThemeBackground(theme: appSettings.appTheme)
+                .ignoresSafeArea()
             
             GeometryReader { geometry in
                 HStack(alignment: .top, spacing: 0) {
                     LeftPanel(textInput: $textInput)
                         .frame(width: geometry.size.width * 0.70, height: geometry.size.height)
                     
-                    Divider().opacity(0.3)
+                    Divider()
                     
                     RightPanel(textInput: $textInput, selectedVoice: $selectedVoice, speechSpeed: $speechSpeed)
                         .frame(width: geometry.size.width * 0.30, height: geometry.size.height)
                 }
             }
-            
-            VStack {
-                HStack {
-                    Spacer()
-                    Button(action: { showAbout.toggle() }) {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 18))
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.trailing, 20)
-                    .padding(.top, 16)
-                    .popover(isPresented: $showAbout, arrowEdge: .bottom) { aboutContent }
-                }
-                Spacer()
-            }
         }
         .frame(minWidth: 900, minHeight: 600)
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                // FIX: Removed duplicate Trash icon. Kept only the Info icon.
+                Button {
+                    showAbout.toggle()
+                } label: {
+                    Image(systemName: "info.circle")
+                }
+                .help("About KokoroMac")
+                .popover(isPresented: $showAbout, arrowEdge: .bottom) { aboutContent }
+            }
+        }
     }
     
     private var aboutContent: some View {

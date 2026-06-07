@@ -70,92 +70,75 @@ struct AudioPlayerView: View {
                 if viewModel.isPlaying { viewModel.stop() } else { viewModel.play(url: audioURL, from: 0) }
             }) {
                 Image(systemName: viewModel.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .resizable().scaledToFit().frame(width: 44, height: 44)
+                    .resizable().scaledToFit()
+                    .frame(width: 44, height: 44) // Restored standard size
                     .foregroundColor(appSettings.appTheme.accentColor)
             }
             .buttonStyle(.plain)
             
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(appSettings.appTheme.isTrueDark ? Color(red: 0.12, green: 0.12, blue: 0.12) : Color.clear)
-                    .background { if !appSettings.appTheme.isTrueDark { RoundedRectangle(cornerRadius: 12).fill(.ultraThinMaterial) } }
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(appSettings.appTheme.isTrueDark ? Color(red: 0.15, green: 0.15, blue: 0.15) : .white.opacity(0.1), lineWidth: 1))
+            TimelineView(.animation) { context in
+                let duration = viewModel.audioPlayer?.duration ?? 1.0
+                let currentTime = viewModel.audioPlayer?.currentTime ?? 0.0
+                let progress = duration > 0 ? CGFloat(currentTime / duration) : 0
+                let playedIndex = Int(progress * CGFloat(viewModel.waveformPoints.count))
                 
-                TimelineView(.animation) { context in
-                    let duration = viewModel.audioPlayer?.duration ?? 1.0
-                    let currentTime = viewModel.audioPlayer?.currentTime ?? 0.0
-                    let progress = duration > 0 ? CGFloat(currentTime / duration) : 0
-                    let playedIndex = Int(progress * CGFloat(viewModel.waveformPoints.count))
-                    
-                    GeometryReader { geometry in
-                        ZStack(alignment: .topLeading) {
-                            HStack(alignment: .center, spacing: 3) {
-                                if viewModel.waveformPoints.isEmpty {
-                                    Text("Processing...").foregroundColor(appSettings.appTheme.isTrueDark ? .white.opacity(0.5) : .secondary).font(.caption)
-                                } else {
-                                    let count = CGFloat(viewModel.waveformPoints.count)
-                                    let spacing: CGFloat = 3
-                                    let totalSpacing = spacing * max(0, count - 1)
-                                    let barWidth = max(1, (geometry.size.width - 24 - totalSpacing) / count)
+                GeometryReader { geometry in
+                    ZStack(alignment: .topLeading) {
+                        HStack(alignment: .center, spacing: 3) { // Restored 3px spacing
+                            if viewModel.waveformPoints.isEmpty {
+                                Text("Processing...").foregroundStyle(.tertiary).font(.caption)
+                            } else {
+                                let count = CGFloat(viewModel.waveformPoints.count)
+                                let spacing: CGFloat = 3
+                                let totalSpacing = spacing * max(0, count - 1)
+                                let barWidth = max(2, (geometry.size.width - totalSpacing) / count)
+                                
+                                ForEach(0..<viewModel.waveformPoints.count, id: \.self) { index in
+                                    let normalized = viewModel.waveformPoints[index]
+                                    let barHeight = max(4, geometry.size.height * normalized) // Restored 4px min height
                                     
-                                    ForEach(0..<viewModel.waveformPoints.count, id: \.self) { index in
-                                        let normalized = viewModel.waveformPoints[index]
-                                        let barHeight = max(4, geometry.size.height * normalized)
-                                        
-                                        let isPlayed = index <= playedIndex
-                                        let color = isPlayed ? appSettings.appTheme.accentColor : (appSettings.appTheme.isTrueDark ? Color.white.opacity(0.3) : Color.secondary.opacity(0.4))
-                                        
-                                        RoundedRectangle(cornerRadius: 2)
-                                            .fill(color)
-                                            .frame(width: barWidth, height: barHeight)
-                                    }
+                                    let isPlayed = index <= playedIndex
+                                    let color = isPlayed ? appSettings.appTheme.accentColor : Color.primary.opacity(0.25)
+                                    
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(color)
+                                        .frame(width: barWidth, height: barHeight)
                                 }
                             }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                            .padding(.horizontal, 12)
-                            
-                            if let loc = hoverLocation {
-                                Rectangle().fill(appSettings.appTheme.accentColor.opacity(0.8)).frame(width: 1.5, height: geometry.size.height).offset(x: loc.x - 0.75).allowsHitTesting(false)
-                            }
-                            if let time = hoverTime, let loc = hoverLocation {
-                                Text(String(format: "%02d:%02d.%01d", Int(time) / 60, Int(time) % 60, Int((time * 10).truncatingRemainder(dividingBy: 10))))
-                                    .font(.caption2.monospacedDigit()).padding(.horizontal, 6).padding(.vertical, 3)
-                                    .background(.ultraThickMaterial).cornerRadius(4).shadow(radius: 2)
-                                    .offset(x: min(max(loc.x - 25, 0), geometry.size.width - 50), y: -25).allowsHitTesting(false)
-                            }
                         }
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .contentShape(Rectangle())
-                        .onContinuousHover { phase in
-                            switch phase {
-                            case .active(let location):
-                                hoverLocation = location
-                                let duration = viewModel.audioPlayer?.duration ?? 0
-                                if duration > 0 {
-                                    let percentage = max(0, min(1, location.x / geometry.size.width))
-                                    hoverTime = duration * percentage
-                                    lastHoverTime = hoverTime!
-                                }
-                            case .ended: hoverLocation = nil; hoverTime = nil
-                            }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        
+                        if let loc = hoverLocation {
+                            Rectangle().fill(appSettings.appTheme.accentColor.opacity(0.8)).frame(width: 1.5, height: geometry.size.height).offset(x: loc.x - 0.75).allowsHitTesting(false)
                         }
-                        .onTapGesture { location in
+                        if let time = hoverTime, let loc = hoverLocation {
+                            Text(String(format: "%02d:%02d.%01d", Int(time) / 60, Int(time) % 60, Int((time * 10).truncatingRemainder(dividingBy: 10))))
+                                .font(.caption2.monospacedDigit()).padding(.horizontal, 6).padding(.vertical, 3)
+                                .background(.regularMaterial).cornerRadius(4).shadow(radius: 2)
+                                .offset(x: min(max(loc.x - 25, 0), geometry.size.width - 50), y: -25).allowsHitTesting(false)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case .active(let location):
+                            hoverLocation = location
                             let duration = viewModel.audioPlayer?.duration ?? 0
-                            if duration > 0 {
-                                let percentage = max(0, min(1, location.x / geometry.size.width))
-                                viewModel.play(url: audioURL, from: duration * percentage)
-                            }
+                            if duration > 0 { hoverTime = duration * max(0, min(1, location.x / geometry.size.width)); lastHoverTime = hoverTime! }
+                        case .ended: hoverLocation = nil; hoverTime = nil
                         }
+                    }
+                    .onTapGesture { location in
+                        let duration = viewModel.audioPlayer?.duration ?? 0
+                        if duration > 0 { viewModel.play(url: audioURL, from: duration * max(0, min(1, location.x / geometry.size.width))) }
                     }
                 }
             }
-            .frame(height: 100)
+            .frame(height: 100) // Expanded waveform height for clear dynamics
         }
         .onAppear { viewModel.generateWaveform(from: audioURL) }
         .onChange(of: audioURL) { oldValue, newValue in
-            viewModel.stop()
-            viewModel.waveformPoints = []
-            viewModel.generateWaveform(from: newValue)
+            viewModel.stop(); viewModel.waveformPoints = []; viewModel.generateWaveform(from: newValue)
         }
     }
 }

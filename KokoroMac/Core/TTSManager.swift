@@ -13,7 +13,10 @@ class TTSManager: ObservableObject {
     let baseDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".KokoroMac")
     
     func startServer() {
-        // Kill zombie servers
+        // NEW: Run migration before killing old processes
+        performMigrationIfNeeded()
+        
+        // Kill zombie servers (existing code)
         let killTask = Process()
         killTask.launchPath = "/bin/sh"
         killTask.arguments = ["-c", "lsof -ti:8080 | xargs kill -9 2>/dev/null || true"]
@@ -30,7 +33,7 @@ class TTSManager: ObservableObject {
         serverProcess = Process()
         serverProcess?.executableURL = URL(fileURLWithPath: pythonPath)
         serverProcess?.arguments = [scriptPath]
-        
+         
         var env = ProcessInfo.processInfo.environment
         env["HF_HOME"] = baseDir.appendingPathComponent("Cache").path
         
@@ -83,7 +86,6 @@ class TTSManager: ObservableObject {
     
     func ensureModelsLoaded() {
         if !modelsLoaded {
-            // Send a lightweight "warm-up" request to reload models
             let url = URL(string: "http://127.0.0.1:8080/health")!
             URLSession.shared.dataTask(with: url) { _, _, _ in
                 DispatchQueue.main.async { self.modelsLoaded = true }
@@ -91,13 +93,33 @@ class TTSManager: ObservableObject {
         }
     }
     
+    func performMigrationIfNeeded() {
+        guard AppVersion.needsMigration() else { return }
+        
+        print("🔄 [TTSManager] Detected version upgrade. Migrating server script...")
+        
+        let serverScriptURL = baseDir.appendingPathComponent("server.py")
+        
+        // Only rewrite server.py, preserve Cache/, Models/, Temp/
+        do {
+            if FileManager.default.fileExists(atPath: serverScriptURL.path) {
+                try FileManager.default.removeItem(at: serverScriptURL)
+                print("🗑️ [Migration] Removed outdated server.py")
+            }
+            try pythonServerScript.write(to: serverScriptURL, atomically: true, encoding: .utf8)
+            print("✅ [Migration] Wrote updated server.py with exact-pause logic")
+            AppVersion.markInstalled()
+        } catch {
+            print("⚠️ [Migration] Failed to update server.py: \(error.localizedDescription)")
+            // Don't block app launch; let health check fail gracefully
+        }
+    }
+     
     func generateSpeech(text: String, voice: Voice, speed: Double) {
         ensureModelsLoaded()
         DispatchQueue.main.async { self.isGenerating = true; self.errorMessage = nil }
         
         let fileId = UUID().uuidString
-        // Replace the NSTextAttachment object character with Kokoro's pause trigger
-        let processedText = text.replacingOccurrences(of: "\u{FFFC}", with: ";-,;-")
         
         let url = URL(string: "http://127.0.0.1:8080/generate")!
         var request = URLRequest(url: url)
@@ -105,7 +127,7 @@ class TTSManager: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let payload: [String: Any] = [
-            "text": processedText,
+            "text": text, // Send the pre-formatted ttsReadyText directly
             "voice": voice.id,
             "lang_code": voice.langCode,
             "file_id": fileId,

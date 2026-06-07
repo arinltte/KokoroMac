@@ -1,4 +1,3 @@
-// Views/RightPanel.swift
 import SwiftUI
 import UniformTypeIdentifiers
 import Combine
@@ -23,33 +22,72 @@ struct RightPanel: View {
     @Binding var speechSpeed: Double
     @EnvironmentObject var ttsManager: TTSManager
     @EnvironmentObject var appSettings: AppSettings
+    
     @State private var showPhonemeHelp = false
+    @State private var showVoicePicker = false
     
     var primaryText: Color { appSettings.appTheme.isTrueDark ? .white : .primary }
     var secondaryText: Color { appSettings.appTheme.isTrueDark ? Color(red: 0.55, green: 0.55, blue: 0.58) : .secondary }
     var borderColor: Color { appSettings.appTheme.isTrueDark ? Color(red: 0.15, green: 0.15, blue: 0.15) : .white.opacity(0.1) }
     
     var body: some View {
-        // Flat structure matches LeftPanel exactly
-        VStack(spacing: 16) {
-            // Voice Selection Card
+        VStack(alignment: .leading, spacing: 16) {
+            
+            // 1. Voice Selection Card
             VStack(alignment: .leading, spacing: 8) {
-                Text("Voice Selection").font(.headline).foregroundColor(primaryText)
-                Picker("", selection: $selectedVoice) {
-                    ForEach(VoiceLibrary.availableVoices) { voice in Text("\(voice.name) [\(voice.grade)]").tag(voice) }
+                Text("Voice Selection")
+                    .font(.headline)
+                    .foregroundColor(primaryText)
+                
+                Button { showVoicePicker.toggle() } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.wave.2.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(appSettings.appTheme.accentColor)
+                            .frame(width: 24)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(selectedVoice.name).font(.body).fontWeight(.medium).foregroundStyle(.primary)
+                            Text(selectedVoice.category == "US" ? "American English" : "British English")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(selectedVoice.grade)
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8).padding(.vertical, 4)
+                            .background(.quaternary, in: Capsule())
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 10)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(borderColor, lineWidth: 1))
                 }
-                .labelsHidden().pickerStyle(.menu).frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12).padding(.vertical, 8)
-                .background(RoundedRectangle(cornerRadius: 10).fill(appSettings.appTheme.isTrueDark ? Color(red: 0.10, green: 0.10, blue: 0.10) : .clear))
-                .background { if !appSettings.appTheme.isTrueDark { RoundedRectangle(cornerRadius: 10).fill(.ultraThinMaterial) } }
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(borderColor, lineWidth: 1))
+                .buttonStyle(.plain)
+                .popover(isPresented: $showVoicePicker, arrowEdge: .top) {
+                    VoicePickerPopover(selectedVoice: $selectedVoice)
+                }
             }
             
-            // Speech Toolbox Card
+            // 2. Speech Toolbox Card
             VStack(alignment: .leading, spacing: 0) {
                 Text("Speech Toolbox").font(.headline).foregroundColor(primaryText).padding(.bottom, 4)
-                ToolboxRow(icon: "pause.rectangle", title: "Insert Pause", theme: appSettings.appTheme) { appSettings.insertDirective.send("PAUSE_CHIP") }
+                
+                ToolboxRow(icon: "pause.rectangle", title: "Short Pause (0.5s)", theme: appSettings.appTheme) {
+                    appSettings.insertDirective.send("PAUSE_CHIP_0.5")
+                }
                 Divider().background(borderColor)
+                ToolboxRow(icon: "pause.rectangle", title: "Medium Pause (1.0s)", theme: appSettings.appTheme) {
+                    appSettings.insertDirective.send("PAUSE_CHIP_1.0")
+                }
+                Divider().background(borderColor)
+                ToolboxRow(icon: "pause.rectangle", title: "Long Pause (2.0s)", theme: appSettings.appTheme) {
+                    appSettings.insertDirective.send("PAUSE_CHIP_2.0")
+                }
+                Divider().background(borderColor)
+                
                 HStack(spacing: 0) {
                     ToolboxRow(icon: "character.phonetic", title: "Phoneme Override", theme: appSettings.appTheme) { appSettings.insertDirective.send("PHONEME_OVERRIDE") }
                     Button(action: { showPhonemeHelp.toggle() }) { Image(systemName: "questionmark.circle").foregroundColor(secondaryText).padding(.trailing, 4) }
@@ -61,58 +99,60 @@ struct RightPanel: View {
             .background { if !appSettings.appTheme.isTrueDark { RoundedRectangle(cornerRadius: 12).fill(.ultraThinMaterial) } }
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(borderColor, lineWidth: 1))
             
+            // 3. Speech Speed Card
             VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Speech Speed").font(.headline).foregroundColor(primaryText)
-                        Spacer()
-                        Text(String(format: "x%.1f", speechSpeed))
-                            .foregroundColor(secondaryText)
-                            .font(.caption)
-                            .monospacedDigit()
-                    }
-                    Slider(value: $speechSpeed, in: 0.5...1.5, step: 0.1)
-                        .tint(appSettings.appTheme.accentColor)
+                HStack {
+                    Text("Speech Speed").font(.headline).foregroundColor(primaryText)
+                    Spacer()
+                    Text(String(format: "x%.1f", speechSpeed))
+                        .foregroundColor(secondaryText).font(.caption).monospacedDigit()
                 }
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 12).fill(appSettings.appTheme.isTrueDark ? Color(red: 0.10, green: 0.10, blue: 0.10) : .clear))
-                .background { if !appSettings.appTheme.isTrueDark { RoundedRectangle(cornerRadius: 12).fill(.ultraThinMaterial) } }
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(borderColor, lineWidth: 1))
-            
-            Spacer() // Pushes bottom section down
-            
-            // Bottom Section (Fixed Height for Alignment)
-            VStack(spacing: 12) {
-                //Spacer()
-                Button(action: { ttsManager.generateSpeech(text: textInput, voice: selectedVoice, speed: speechSpeed) }) {                    HStack {
-                        if !ttsManager.isServerReady {
-                            ProgressView().controlSize(.small).tint(.white)
-                            Text("Starting Server...").fontWeight(.bold)
-                        } else if ttsManager.isGenerating {
-                            ProgressView().controlSize(.small).tint(.white)
-                            Text("Generating...").fontWeight(.bold)
-                        } else {
-                            Image(systemName: "waveform.circle.fill")
-                            Text("Generate Speech").fontWeight(.bold)
-                        }
-                    }
-                    .foregroundColor(.white).frame(maxWidth: .infinity).padding(.vertical, 12)
-                    .background(LinearGradient(colors: [appSettings.appTheme.accentColor.opacity(0.9), appSettings.appTheme.accentColor.opacity(0.6)], startPoint: .top, endPoint: .bottom))
-                    .cornerRadius(10).shadow(color: appSettings.appTheme.accentColor.opacity(0.3), radius: 8, y: 4)
-                }
-                .buttonStyle(.plain).disabled(!ttsManager.isServerReady || ttsManager.isGenerating || textInput.isEmpty)
-                
-                Button(action: exportAudio) {
-                    Label("Export Audio...", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity).padding(.vertical, 10)
-                        .foregroundColor(primaryText)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(appSettings.appTheme.isTrueDark ? Color(red: 0.10, green: 0.10, blue: 0.10) : .clear))
-                        .background { if !appSettings.appTheme.isTrueDark { RoundedRectangle(cornerRadius: 10).fill(.ultraThinMaterial) } }
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(borderColor, lineWidth: 1))
-                }
-                .buttonStyle(.plain).disabled(ttsManager.currentOutputURL == nil)
+                Slider(value: $speechSpeed, in: 0.5...1.5, step: 0.1)
+                    .tint(appSettings.appTheme.accentColor)
             }
-            .frame(height: 160)
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 12).fill(appSettings.appTheme.isTrueDark ? Color(red: 0.10, green: 0.10, blue: 0.10) : .clear))
+            .background { if !appSettings.appTheme.isTrueDark { RoundedRectangle(cornerRadius: 12).fill(.ultraThinMaterial) } }
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(borderColor, lineWidth: 1))
+            
+            Spacer()
+            
+            // 4. Bottom Action Buttons
+            Button {
+                // Use ttsReadyText. Fallback to textInput just in case it hasn't populated yet.
+                let textToGenerate = appSettings.ttsReadyText.isEmpty ? textInput : appSettings.ttsReadyText
+                ttsManager.generateSpeech(text: textToGenerate, voice: selectedVoice, speed: speechSpeed)
+            } label: {
+                HStack {
+                    if !ttsManager.isServerReady {
+                        ProgressView().controlSize(.small).tint(.white)
+                        Text("Starting Server...").fontWeight(.bold)
+                    } else if ttsManager.isGenerating {
+                        ProgressView().controlSize(.small).tint(.white)
+                        Text("Generating...").fontWeight(.bold)
+                    } else {
+                        Image(systemName: "waveform.badge.mic")
+                        Text("Generate Speech").fontWeight(.bold)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(appSettings.appTheme.accentColor)
+            .controlSize(.large)
+            .disabled(!ttsManager.isServerReady || ttsManager.isGenerating || textInput.isEmpty)
+            
+            Button { exportAudio() } label: {
+                Label("Export Audio...", systemImage: "square.and.arrow.up")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .disabled(ttsManager.currentOutputURL == nil)
         }
-        .padding(20) // Exact match to LeftPanel
+        .padding(20)
     }
     
     private var phonemeHelpView: some View {

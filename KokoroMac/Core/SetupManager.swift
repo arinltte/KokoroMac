@@ -18,7 +18,6 @@ class SetupManager: ObservableObject {
         let serverScript = baseDir.appendingPathComponent("server.py").path
         let cacheDir = baseDir.appendingPathComponent("Cache").path
         
-        // Only skip setup if the Cache folder exists (meaning models were downloaded)
         if FileManager.default.fileExists(atPath: pythonBin) &&
            FileManager.default.fileExists(atPath: serverScript) &&
            FileManager.default.fileExists(atPath: cacheDir) {
@@ -56,14 +55,12 @@ class SetupManager: ObservableObject {
         print("🚀 [SetupManager] Starting setup process...")
         
         Task {
-            // 1. Check Internet Connectivity
             if !(await isInternetAvailable()) {
                 await updateStatus("⚠️ Internet connection required.\nPlease connect to Wi-Fi and tap 'Retry Setup'.", progress: 0.0)
                 DispatchQueue.main.async { self.isInstalling = false }
                 return
             }
             
-            // 2. Check Homebrew
             await updateStatus("Checking prerequisites...", progress: 0.05)
             guard let brewPath = ensureHomebrewInstalled() else {
                 await updateStatus("⚠️ Homebrew not found.\n\nPlease install Homebrew first via Terminal:\n/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"\n\nThen restart KokoroMac.", progress: 0.0)
@@ -72,7 +69,6 @@ class SetupManager: ObservableObject {
             }
             
             do {
-                // 3. Create Directories
                 await updateStatus("Preparing directories...", progress: 0.1)
                 let subDirs = ["Python", "Models", "Cache", "Temp"]
                 if !FileManager.default.fileExists(atPath: baseDir.path) {
@@ -84,12 +80,10 @@ class SetupManager: ObservableObject {
                         try FileManager.default.createDirectory(at: path, withIntermediateDirectories: true)
                     }
                 }
-                
-                // 4. Install Python 3.11 and espeak-ng
+                 
                 await updateStatus("Installing Python 3.11 and espeak-ng...", progress: 0.2)
                 try await runShellCommand("\(brewPath) install python@3.11 espeak-ng")
                 
-                // 5. Setup Virtual Environment
                 await updateStatus("Setting up Python environment...", progress: 0.4)
                 let pythonEnv = baseDir.appendingPathComponent("Python")
                 let pythonBin = pythonEnv.appendingPathComponent("bin/python").path
@@ -101,13 +95,13 @@ class SetupManager: ObservableObject {
                     try await runShellCommand("'\(actualBrewPython)' -m venv '\(pythonEnv.path)'")
                 }
                 
-                // 6. Install Pip Packages
                 await updateStatus("Installing AI dependencies (This may take a few minutes)...", progress: 0.5)
                 let pipPath = pythonEnv.appendingPathComponent("bin/pip").path
                 try await runShellCommand("'\(pipPath)' install --upgrade pip")
-                try await runShellCommand("'\(pipPath)' install 'kokoro>=0.9.2' soundfile torch fastapi uvicorn pydantic huggingface_hub spacy")
                 
-                // 7. Pre-download models for OFFLINE use
+                // FIX: Added numpy explicitly to ensure it is available for audio silence generation
+                try await runShellCommand("'\(pipPath)' install 'kokoro>=0.9.2' soundfile torch fastapi uvicorn pydantic huggingface_hub spacy numpy")
+                
                 await updateStatus("Downloading AI models for offline use...", progress: 0.7)
                 let hfHome = baseDir.appendingPathComponent("Cache").path
                 let downloadScript = """
@@ -133,18 +127,17 @@ class SetupManager: ObservableObject {
                 try await runShellCommand("'\(pythonBin)' '\(tempScriptPath)' '\(hfHome)'")
                 try? FileManager.default.removeItem(atPath: tempScriptPath)
                 
-                // 8. Write Server Script
                 await updateStatus("Configuring local server...", progress: 0.9)
                 let scriptPath = baseDir.appendingPathComponent("server.py")
                 try pythonServerScript.write(to: scriptPath, atomically: true, encoding: .utf8)
                 
-                // 9. Finish
                 await updateStatus("Setup Complete!", progress: 1.0)
                 DispatchQueue.main.async {
                     self.isSetupComplete = true
                     self.isInstalling = false
+                    AppVersion.markInstalled() // NEW: Mark version on fresh install too
                 }
-                
+                 
             } catch {
                 print("❌ [SetupManager] FATAL ERROR: \(error.localizedDescription)")
                 await updateStatus("⚠️ Setup failed.\n\nPlease ensure you have a stable internet connection and try again.\n\nError: \(error.localizedDescription)", progress: 0.0)

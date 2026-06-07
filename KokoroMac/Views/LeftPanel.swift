@@ -1,48 +1,74 @@
-// Views/LeftPanel.swift
 import SwiftUI
 
 struct LeftPanel: View {
     @Binding var textInput: String
     @EnvironmentObject var ttsManager: TTSManager
     @EnvironmentObject var appSettings: AppSettings
-    
-    var primaryText: Color { appSettings.appTheme.isTrueDark ? .white : .primary }
-    var secondaryText: Color { appSettings.appTheme.isTrueDark ? Color(red: 0.55, green: 0.55, blue: 0.58) : .secondary }
-    
+     
     var body: some View {
-        // Flat structure matches RightPanel exactly
-        VStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
+            
+            // Speech Text Area (Takes remaining space)
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Speech Text").font(.headline).foregroundColor(primaryText)
+                    Text("Speech Text")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
                     Spacer()
-                    Button(action: { textInput = "" }) { Image(systemName: "trash").foregroundColor(secondaryText) }.buttonStyle(.plain)
+                    Button(action: { textInput = "" }) {
+                        Image(systemName: "trash")
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.secondary)
                 }
                 
-                CardContainer(theme: appSettings.appTheme) {
-                    MacTextEditor(text: $textInput, insertSignal: appSettings.insertDirective, theme: appSettings.appTheme)
+                ZStack(alignment: .bottomTrailing) {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(.regularMaterial)
+                    
+                    MacTextEditor(text: $textInput, insertSignal: appSettings.insertDirective, theme: appSettings.appTheme, appSettings: appSettings)
                         .padding(12)
-                        .frame(minHeight: 150, maxHeight: .infinity)
+                        .padding(.bottom, 20)
+                     
+                    Text("\(textInput.count) characters")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .monospacedDigit()
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 8)
                 }
-                Text("\(textInput.count) characters").font(.caption2).foregroundColor(secondaryText)
             }
             .frame(maxHeight: .infinity)
             
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Audio Preview").font(.headline).foregroundColor(primaryText)
-                if let url = ttsManager.currentOutputURL {
-                    AudioPlayerView(audioURL: url)
-                } else {
-                    CardContainer(theme: appSettings.appTheme) {
-                        VStack(spacing: 8) {
-                            Image(systemName: "waveform").font(.largeTitle).foregroundColor(secondaryText)
-                            Text("Generated audio will appear here.").font(.caption).foregroundColor(secondaryText)
+            // Audio Preview Area (Fixed compact height)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Audio Preview")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(.regularMaterial)
+                    
+                    if let url = ttsManager.currentOutputURL {
+                        AudioPlayerView(audioURL: url)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                    } else {
+                        VStack(spacing: 6) {
+                            Image(systemName: "waveform")
+                                .font(.system(size: 20, weight: .light))
+                                .foregroundStyle(.tertiary)
+                            Text("Generated audio will appear here")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
-                    }.frame(height: 100)
+                        .frame(maxWidth: .infinity, minHeight: 120)
+                    }
                 }
             }
-            .frame(height: 160)
+            .frame(height: 140)
         }
-        .padding(20) // Exact match to RightPanel
+        .padding(20)
     }
 }
