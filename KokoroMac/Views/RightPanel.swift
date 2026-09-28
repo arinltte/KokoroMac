@@ -117,6 +117,13 @@ struct RightPanel: View {
             
             Spacer()
             
+            if let error = ttsManager.errorMessage {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            
             // 4. Bottom Action Buttons
             Button {
                 // Use ttsReadyText. Fallback to textInput just in case it hasn't populated yet.
