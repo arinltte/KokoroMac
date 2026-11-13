@@ -125,6 +125,9 @@ class TTSManager: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        // The server renders the whole file before responding, so long texts can take
+        // many minutes. URLSession's default 60s idle timeout would abort those requests.
+        request.timeoutInterval = 60 * 60
         
         let payload: [String: Any] = [
             "text": text, // Send the pre-formatted ttsReadyText directly
@@ -136,17 +139,30 @@ class TTSManager: ObservableObject {
         
         request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 60 * 60
+        config.timeoutIntervalForResource = 60 * 60 * 6
+        let session = URLSession(configuration: config)
+        
+        session.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async { self.isGenerating = false }
             if let error = error {
                 DispatchQueue.main.async { self.errorMessage = "Network Error: \(error.localizedDescription)" }
                 return
             }
-            guard let data = data else { return }
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let filePath = json["file"] as? String {
+            guard let data = data else {
+                DispatchQueue.main.async { self.errorMessage = "No response from TTS server." }
+                return
+            }
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            if let filePath = json?["file"] as? String {
                 DispatchQueue.main.async { self.currentOutputURL = URL(fileURLWithPath: filePath) }
+            } else {
+                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                let detail = json?["detail"] as? String ?? "Unexpected response"
+                DispatchQueue.main.async { self.errorMessage = "Generation failed (\(status)): \(detail)" }
             }
         }.resume()
+        session.finishTasksAndInvalidate()
     }
 }
